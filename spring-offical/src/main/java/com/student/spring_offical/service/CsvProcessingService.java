@@ -2,6 +2,7 @@ package com.student.spring_offical.service;
 
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
+import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -16,7 +17,7 @@ import java.util.Set;
 
 @Service
 public class CsvProcessingService {
-    public Resource readFileLineByLine(MultipartFile file) throws IOException, CsvException {
+    public Resource removeDuplicatesFromCsv(MultipartFile file) throws IOException, CsvException {
 
         // Đây là hàm mà Controller sẽ gọi
         // Đầu vào là MultipartFile, đầu ra là Resource (để user download)
@@ -33,17 +34,26 @@ public class CsvProcessingService {
         }
             csvReader.close();
         //lọc dữ liệu bị trùng
-        Set<List<String>> uniquesData = new LinkedHashSet<>(); {
+        Set<List<String>> uniquesData = new LinkedHashSet<>();
             for(String[] row : allData) {
                 uniquesData.add(Arrays.asList(row));
             }
-        }
-
+        //Ghi file vào bộ nhớ
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
+        OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
 
+        CSVWriter csvWrite = new CSVWriter(outputStreamWriter);
+        //Chuyển kiểu dữ liệu trong Set về String[] để đúng định dạng WriterNext();
+        try (OutputStreamWriter streamWriter = new OutputStreamWriter(outputStream);
+             CSVWriter csvWriter = new CSVWriter(streamWriter)) {
 
-
+            for (List<String> row : uniquesData) {
+                // Chuyển lại thành mảng String[]
+                // (dùng new String[0] là cách làm phổ biến)
+                csvWriter.writeNext(row.toArray(new String[0]));
+            }
+        }
 
 
         return new ByteArrayResource(outputStream.toByteArray());
