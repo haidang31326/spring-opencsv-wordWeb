@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/csv")
@@ -43,6 +46,22 @@ public class csvController {
         catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(null);
+        }
+    }
+    @PostMapping("/preview/json")
+    public ResponseEntity<?> previewCsv(@RequestParam("file") MultipartFile file ,
+                                                @RequestParam(value = "maxRows",defaultValue = "10") int maxRows) {
+        try {
+            List<String[]> rows = csvService.previewCsv(file, maxRows);
+            List<List<String>> asList = rows.stream().map(row -> Arrays.asList(row)).collect(Collectors.toList());
+            return ResponseEntity.ok(asList);
+        }catch (IOException | CsvException e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("Error processing CSV file");
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Invalid request" + e.getMessage());
         }
     }
 }

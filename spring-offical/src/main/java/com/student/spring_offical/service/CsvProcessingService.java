@@ -10,10 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Service
 public class CsvProcessingService {
@@ -82,4 +80,17 @@ public class CsvProcessingService {
 
       return new ByteArrayResource(outputStream.toByteArray());
   }
+public List<String[]> previewCsv(MultipartFile file,int maxRows) throws IOException, CsvException {
+        List<String[]> preview = new ArrayList<>();
+        try(Reader fileReader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+            CSVReader csvReader = new CSVReaderBuilder(fileReader).build()) {
+            String[] row;
+            int count =0;
+            while((row = csvReader.readNext()) != null && count < maxRows) {
+                preview.add(row);
+                count++;
+            }
+        }
+        return preview;
+}
 }
