@@ -42,7 +42,6 @@ public class CsvProcessingService {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(outputStream);
-
         CSVWriter csvWrite = new CSVWriter(outputStreamWriter);
         //Chuyển kiểu dữ liệu trong Set về String[] để đúng định dạng WriterNext();
         try (OutputStreamWriter streamWriter = new OutputStreamWriter(outputStream);
@@ -58,25 +57,29 @@ public class CsvProcessingService {
 
         return new ByteArrayResource(outputStream.toByteArray());
     }
-    public void readAllFile(String file) {
-        try {
-            //Tạo đối tượng của lớp fileReader
-            //csv file là một tham số
-            FileReader fileReader = new  FileReader(file);
-            //tạo đối tượng của csvReader
-            CSVReader csvReader = new
-                    CSVReaderBuilder(fileReader)
-                    .withSkipLines(1)
-                    .build();
-            List<String[]> allData = csvReader.readAll();
-            for (String[] row : allData) {
-                for(String cell : row) {
-                    System.out.println(cell+ "\t");
-                }
-                System.out.println();
-            }
-        }catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
+  public Resource removeDuplicatesFromCsvChat(MultipartFile file) throws IOException, CsvException {
+      // Đọc dữ liệu từ file CSV
+      List<String[]> allData;
+      try (Reader fileReader = new InputStreamReader(file.getInputStream());
+           CSVReader csvReader = new CSVReader(fileReader)) {
+          allData = csvReader.readAll();
+      }
+
+      // Lọc dữ liệu trùng lặp
+      Set<List<String>> uniqueData = new LinkedHashSet<>();
+      for (String[] row : allData) {
+          uniqueData.add(Arrays.asList(row));
+      }
+
+      // Ghi dữ liệu đã lọc vào bộ nhớ
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      try (OutputStreamWriter streamWriter = new OutputStreamWriter(outputStream, "UTF-8");
+           CSVWriter csvWriter = new CSVWriter(streamWriter)) {
+          for (List<String> row : uniqueData) {
+              csvWriter.writeNext(row.toArray(new String[0]));
+          }
+      }
+
+      return new ByteArrayResource(outputStream.toByteArray());
+  }
 }
